@@ -665,6 +665,13 @@ def render_heatmap_ui(
             key="heatmap_dim_diagonal",
             help="Grey out or dim 100% self-similarity diagonal cells to focus visual attention on cross-document matches."
         )
+        
+        show_annotations = st.checkbox(
+            "Show Annotations",
+            value=True,
+            key="heatmap_show_annotations",
+            help="Display similarity score values directly on the heatmap cells."
+        )
 
     n = len(clean_df)
 
@@ -675,6 +682,7 @@ def render_heatmap_ui(
         colormap_name=colormap_name,
         log_scale=log_scale,
         dim_diagonal=dim_diagonal,
+        annotate=show_annotations,
     )
 
     if zoom_mode == "Fit Matrix":
@@ -698,3 +706,26 @@ def render_heatmap_ui(
 
     st.plotly_chart(fig, use_container_width=True)
     
+    # Issue #6: Download high-resolution PNG
+    with st.expander("Export Options"):
+        import io
+        st.write("Generate a high-resolution static PNG for reports and presentations.")
+        if st.button("Generate PNG"):
+            with st.spinner("Rendering high-resolution PNG..."):
+                fig_png = plot_similarity_heatmap(
+                    clean_df,
+                    threshold=threshold,
+                    theme_colors=theme_colors,
+                    colormap_name=colormap_name,
+                    log_scale=log_scale,
+                    dim_diagonal=dim_diagonal,
+                    annotate=show_annotations,
+                )
+                buf = io.BytesIO()
+                fig_png.savefig(buf, format="png", dpi=300, bbox_inches="tight")
+                st.download_button(
+                    label="Download High-Resolution PNG",
+                    data=buf.getvalue(),
+                    file_name="similarity_heatmap.png",
+                    mime="image/png",
+                )
