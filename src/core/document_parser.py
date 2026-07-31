@@ -465,11 +465,15 @@ def _ocr_pdf_page(
                 (pixmap.width, pixmap.height),
                 pixmap.samples,
             )
-            return pytesseract.image_to_string(
-                image,
-                lang=language,
-                config="--oem 3 --psm 3",
-            ).strip()
+            try:
+                return pytesseract.image_to_string(
+                    image,
+                    lang=language,
+                    config="--oem 3 --psm 3",
+                ).strip()
+            except (MemoryError, pytesseract.TesseractError, Exception) as exc:
+                logger.warning(f"[document_parser] OCR Extraction failed for page {page_index}: {exc}")
+                return "[OCR Extraction Failed: Memory Exhausted or Tesseract Error]"
     except pytesseract.TesseractNotFoundError as exc:
         from src.errors import OCR_TESSERACT_NOT_FOUND
 
@@ -1256,11 +1260,15 @@ def extract_text_from_image(
     file_bytes = _read_pdf_bytes(file)
     try:
         image = Image.open(io.BytesIO(file_bytes))
-        return pytesseract.image_to_string(
-            image,
-            lang=ocr_language,
-            config="--oem 3 --psm 3",
-        ).strip()
+        try:
+            return pytesseract.image_to_string(
+                image,
+                lang=ocr_language,
+                config="--oem 3 --psm 3",
+            ).strip()
+        except (MemoryError, pytesseract.TesseractError, Exception) as exc:
+            logger.warning(f"[document_parser] OCR Extraction failed: {exc}")
+            return "[OCR Extraction Failed: Memory Exhausted or Tesseract Error]"
     except pytesseract.TesseractNotFoundError as exc:
         from src.errors import OCR_TESSERACT_NOT_FOUND
         raise OCRDependencyError(OCR_TESSERACT_NOT_FOUND) from exc

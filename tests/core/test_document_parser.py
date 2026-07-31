@@ -688,3 +688,22 @@ def test_get_supported_file_extensions():
         ".rtf",
         ".txt",
     ]
+
+def test_extract_text_from_image_oom(monkeypatch):
+    import pytesseract
+    from src.core.document_parser import extract_text_from_image
+    
+    def mock_image_to_string(*args, **kwargs):
+        raise MemoryError('OOM')
+        
+    monkeypatch.setattr(pytesseract, 'image_to_string', mock_image_to_string)
+    
+    # Create a dummy valid image bytes
+    from PIL import Image
+    import io
+    img = Image.new('RGB', (10, 10))
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    
+    result = extract_text_from_image(buf.getvalue())
+    assert result == '[OCR Extraction Failed: Memory Exhausted or Tesseract Error]'
