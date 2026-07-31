@@ -94,6 +94,8 @@ def build_index(
         return faiss.IndexFlatIP(dim), registry
 
     matrix = np.vstack(all_vectors)
+    # Issue #848: Optimize FAISS Embedding Normalization Loop
+    matrix = matrix / np.linalg.norm(matrix, axis=1, keepdims=True)
     n_vectors = matrix.shape[0]
 
     # ── Resolve index type ────────────────────────────────────────────────────
@@ -275,6 +277,8 @@ def add_to_index(
         return index, registry
 
     matrix = np.vstack(new_vectors)
+    # Issue #848: Optimize FAISS Embedding Normalization Loop
+    matrix = matrix / np.linalg.norm(matrix, axis=1, keepdims=True)
     offset = len(registry)
     ids = np.arange(offset, offset + len(new_vectors), dtype=np.int64)
 
@@ -402,6 +406,8 @@ def build_index_from_matrix(
 
     n_vectors = matrix.shape[0]
     mat = matrix.astype("float32")
+    # Issue #848: Optimize FAISS Embedding Normalization Loop
+    mat = mat / np.linalg.norm(mat, axis=1, keepdims=True)
 
     # Resolve index type
     if index_type == "auto":
