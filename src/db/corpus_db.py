@@ -193,6 +193,8 @@ def init_corpus_db() -> None:
         if "deleted_at" not in columns:
             conn.execute("ALTER TABLE documents ADD COLUMN deleted_at TEXT")
 
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_documents_created_at ON documents(upload_date)")
+
         try:
             os.chmod(_DB_PATH, 0o600)
         except OSError:
